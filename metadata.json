@@ -1,0 +1,5 @@
+{
+  "name": "Eventify AI",
+  "description": "An intelligent event management and discovery platform built with React and Tailwind CSS. It offers a seamless experience for both attendees and organizers, featuring AI-powered recommendations, analytics, and a modern, glassmorphism-inspired UI with dark mode support.",
+  "requestFramePermissions": []
+}
