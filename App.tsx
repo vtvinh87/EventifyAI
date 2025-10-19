@@ -18,6 +18,7 @@ const PaymentCancelPage = lazy(() => import('./pages/PaymentCancelPage'));
 const EventAnalyticsPage = lazy(() => import('./pages/dashboard/EventAnalyticsPage'));
 const OverviewPage = lazy(() => import('./pages/dashboard/OverviewPage'));
 const ManageEventPage = lazy(() => import('./pages/dashboard/ManageEventPage'));
+const CreateEventPage = lazy(() => import('./pages/dashboard/CreateEventPage')); // Import new page
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const OnboardingPage = lazy(() => import('./pages/OnboardingPage'));
@@ -74,7 +75,8 @@ export default function App() {
                 <Route path="/events/:id" element={<EventDetailPage />} />
                 <Route path="/my-tickets" element={<MyTicketsPage />} />
                 <Route path="/checkout" element={<CheckoutPage />} />
-                <Route path="/create-event" element={<div className="text-center py-20 text-white">{t('createEvent.placeholder')}</div>} />
+                {/* Updated create-event route */}
+                <Route path="/create-event" element={<CreateEventPage />} />
                 <Route path="/payment/success" element={<PaymentSuccessPage />} />
                 <Route path="/payment/cancel" element={<PaymentCancelPage />} />
                 <Route path="/events/:id/analytics" element={<EventAnalyticsPage />} />
@@ -84,6 +86,8 @@ export default function App() {
               <Route path="/dashboard" element={<DashboardLayout />}>
                   <Route index element={<OverviewPage />} />
                   <Route path="events" element={<ManageEventPage />} />
+                   {/* Add edit event route */}
+                  <Route path="events/:id/edit" element={<CreateEventPage />} />
                   <Route path="analytics-overview" element={<div className="p-8 text-white"><h1 className="text-2xl font-bold">Tổng quan Phân tích</h1></div>} />
               </Route>
               

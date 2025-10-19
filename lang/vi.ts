@@ -118,7 +118,22 @@ export const vi = {
     completeButton: 'Hoàn tất',
   },
   createEvent: {
-    placeholder: 'Trang Tạo Sự Kiện'
+    title: 'Tạo Sự Kiện Mới',
+    editTitle: 'Chỉnh Sửa Sự Kiện',
+    placeholder: 'Trang Tạo Sự Kiện',
+    saveButton: 'Lưu Sự kiện',
+    savingButton: 'Đang lưu...',
+    publishButton: 'Xuất bản Sự kiện',
+    basicInfo: 'Thông tin cơ bản',
+    tickets: 'Quản lý vé',
+    addTicketType: 'Thêm loại vé',
+    ticketName: 'Tên loại vé',
+    ticketPrice: 'Giá vé',
+    ticketQuantity: 'Số lượng',
+    ticketBenefits: 'Quyền lợi (mỗi dòng một quyền lợi)',
+    livePreview: 'Xem trước trực tiếp',
+    successMessage: 'Sự kiện đã được lưu thành công!',
+    errorMessage: 'Đã xảy ra lỗi khi lưu sự kiện.',
   },
   checkout: {
       title: 'Thanh toán',

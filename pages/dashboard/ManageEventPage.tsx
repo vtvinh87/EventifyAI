@@ -1,59 +1,48 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { Event } from '../../types';
 import { Button } from '../../components/ui/Button';
 import { IconPlusCircle } from '../../components/Icons';
-import { Modal } from '../../components/UI';
 import { EventTable } from '../../features/dashboard/EventTable';
-import { EventForm } from '../../features/dashboard/EventForm';
 import { AttendeeTable } from '../../features/dashboard/AttendeeTable';
 import { useEventStore } from '../../stores/eventStore';
 
 const ManageEventPage: React.FC = () => {
+  const navigate = useNavigate();
   const { 
       organizerEvents,
       currentEventAttendees,
       fetchOrganizerEvents,
       fetchEventAttendees,
-      createEvent, 
-      updateEvent, 
       deleteEvent 
   } = useEventStore();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [eventToEdit, setEventToEdit] = useState<Event | null>(null);
 
   useEffect(() => {
+    // Check if organizerEvents is empty before fetching
     if (organizerEvents.length === 0) {
       fetchOrganizerEvents();
     }
-    // Tải danh sách người tham dự cho một sự kiện mẫu
+  }, [organizerEvents, fetchOrganizerEvents]);
+
+  // Load attendees for a sample event if the list is empty
+  useEffect(() => {
     if (currentEventAttendees.length === 0) {
-        fetchEventAttendees('mock_event_id');
+      fetchEventAttendees('mock_event_id');
     }
-  }, [organizerEvents, fetchOrganizerEvents, currentEventAttendees, fetchEventAttendees]);
+  }, [currentEventAttendees, fetchEventAttendees]);
 
   const handleCreateNew = () => {
-    setEventToEdit(null);
-    setIsModalOpen(true);
+    navigate('/create-event');
   };
 
   const handleEdit = (event: Event) => {
-    setEventToEdit(event);
-    setIsModalOpen(true);
+    navigate(`/dashboard/events/${event.id}/edit`);
   };
   
   const handleDelete = (eventId: string) => {
       if (window.confirm('Bạn có chắc chắn muốn xóa sự kiện này không?')) {
           deleteEvent(eventId);
       }
-  };
-
-  const handleSave = (eventData: Omit<Event, 'id' | 'organizer' | 'ticketTypes'> & { id?: string }) => {
-    if (eventData.id) {
-      updateEvent(eventData as Partial<Event> & { id: string });
-    } else {
-      createEvent(eventData);
-    }
-    setIsModalOpen(false);
   };
 
   return (
@@ -73,18 +62,6 @@ const ManageEventPage: React.FC = () => {
         <p className="text-gray-400 mb-6">Quản lý và theo dõi tất cả người tham dự các sự kiện của bạn tại đây.</p>
         <AttendeeTable attendees={currentEventAttendees} />
       </div>
-      
-      <Modal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        title={eventToEdit ? 'Chỉnh sửa sự kiện' : 'Tạo sự kiện mới'}
-      >
-        <EventForm 
-            eventToEdit={eventToEdit}
-            onSave={handleSave}
-            onClose={() => setIsModalOpen(false)}
-        />
-      </Modal>
     </div>
   );
 };

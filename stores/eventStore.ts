@@ -1,11 +1,11 @@
 import { create } from 'zustand';
-import type { Event, Ticket } from '../types';
+import type { Event, Ticket, TicketType } from '../types';
 import type { FilterState } from '../features/events/EventFilter';
 import type { Attendee } from '../types/attendee';
 import { MOCK_ATTENDEES } from '../constants';
 import { useAuthStore } from './authStore';
 import { useUIStore } from './uiStore';
-import { getEvents, getEventById, getMyTickets } from '../services/apiEvents';
+import * as api from '../services/apiEvents';
 
 const initialFilterState: FilterState = {
   keyword: '',
@@ -41,12 +41,10 @@ interface EventState {
   fetchOrganizerEvents: () => Promise<void>;
   fetchDashboardStats: () => Promise<void>;
   fetchEventAttendees: (eventId: string) => Promise<void>;
-  createEvent: (eventData: Omit<Event, 'id' | 'organizer' | 'ticketTypes'>) => Promise<void>;
-  updateEvent: (eventData: Partial<Event> & { id: string }) => Promise<void>;
+  createEvent: (eventData: Partial<Event>) => Promise<boolean>;
+  updateEvent: (eventId: string, eventData: Partial<Event>) => Promise<boolean>;
   deleteEvent: (eventId: string) => Promise<void>;
 }
-
-const ORGANIZER_EVENTS_KEY = 'eventify-organizer-events';
 
 export const useEventStore = create<EventState>((set, get) => ({
   events: [],
@@ -63,7 +61,7 @@ export const useEventStore = create<EventState>((set, get) => ({
     const { setLoading, setError } = useUIStore.getState();
     setLoading(true);
     try {
-      const events = await getEvents();
+      const events = await api.getEvents();
       set({
         events,
         filteredEvents: events,
@@ -81,7 +79,7 @@ export const useEventStore = create<EventState>((set, get) => ({
     setLoading(true);
     set({ selectedEvent: null });
     try {
-      const event = await getEventById(id);
+      const event = await api.getEventById(id);
       if (event) {
         set({ selectedEvent: event });
       } else {
@@ -100,7 +98,6 @@ export const useEventStore = create<EventState>((set, get) => ({
     const { user } = useAuthStore.getState();
 
     if (!user) {
-        // This can happen briefly on page load, not necessarily an error.
         console.log("No user session, cannot fetch tickets.");
         set({ myTickets: [] });
         return;
@@ -108,7 +105,7 @@ export const useEventStore = create<EventState>((set, get) => ({
     
     setLoading(true);
     try {
-      const tickets = await getMyTickets(user.id);
+      const tickets = await api.getMyTickets(user.id);
       set({ myTickets: tickets });
     } catch (e) {
         const errorMessage = e instanceof Error ? e.message : 'Unknown error';
@@ -173,16 +170,86 @@ export const useEventStore = create<EventState>((set, get) => ({
     }));
   },
   
-  // MOCK IMPLEMENTATIONS for organizer dashboard - can be replaced with Supabase calls later
   fetchOrganizerEvents: async () => {
-      // This is a mock implementation
-      const allEvents = await getEvents();
-      const organizerEvents = allEvents.filter(e => e.organizer_id === 'c33a97e1-8726-48a3-9f86-35eac1306368'); // Mock organizer ID
-      set({ organizerEvents });
+    const { setLoading, setError } = useUIStore.getState();
+    const { user } = useAuthStore.getState();
+    if (!user) return;
+
+    setLoading(true);
+    try {
+        const allEvents = await api.getEvents();
+        const organizerEvents = allEvents.filter(e => e.organizer_id === user.id);
+        set({ organizerEvents });
+    } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+        setError(`Không thể tải sự kiện của bạn: ${errorMessage}`);
+    } finally {
+        setLoading(false);
+    }
   },
+
   fetchDashboardStats: async () => { /* Mock */ set({ dashboardStats: { totalRevenue: 55000, ticketsSold24h: 120, totalCheckins: 8430, activeEvents: 2 }})},
+  
   fetchEventAttendees: async (eventId) => { /* Mock */ set({ currentEventAttendees: MOCK_ATTENDEES })},
-  createEvent: async (eventData) => { /* Mock */ console.log("Creating event", eventData)},
-  updateEvent: async (eventData) => { /* Mock */ console.log("Updating event", eventData)},
-  deleteEvent: async (eventId) => { /* Mock */ console.log("Deleting event", eventId)},
+
+  createEvent: async (eventData) => {
+    const { setLoading, setError } = useUIStore.getState();
+    const { user } = useAuthStore.getState();
+    if (!user) {
+        setError("Bạn phải đăng nhập để tạo sự kiện.");
+        return false;
+    }
+    setLoading(true);
+    try {
+        const newEvent = await api.createEvent(eventData, user.id);
+        set(state => ({
+            organizerEvents: [...state.organizerEvents, newEvent],
+        }));
+        return true;
+    } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+        setError(`Không thể tạo sự kiện: ${errorMessage}`);
+        return false;
+    } finally {
+        setLoading(false);
+    }
+  },
+
+  updateEvent: async (eventId, eventData) => {
+    const { setLoading, setError } = useUIStore.getState();
+    setLoading(true);
+    try {
+        const updatedEvent = await api.updateEvent(eventId, eventData);
+        set(state => ({
+            organizerEvents: state.organizerEvents.map(e => e.id === eventId ? updatedEvent : e),
+        }));
+        return true;
+    } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+        setError(`Không thể cập nhật sự kiện: ${errorMessage}`);
+        return false;
+    } finally {
+        setLoading(false);
+    }
+  },
+  
+  deleteEvent: async (eventId) => {
+    const { setLoading, setError } = useUIStore.getState();
+    const originalEvents = get().organizerEvents;
+    // Optimistic update
+    set(state => ({
+        organizerEvents: state.organizerEvents.filter(e => e.id !== eventId)
+    }));
+    setLoading(true);
+    try {
+        await api.deleteEvent(eventId);
+    } catch (e) {
+        const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+        setError(`Không thể xóa sự kiện: ${errorMessage}`);
+        // Revert on error
+        set({ organizerEvents: originalEvents });
+    } finally {
+        setLoading(false);
+    }
+  },
 }));
