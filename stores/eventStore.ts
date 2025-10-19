@@ -66,8 +66,8 @@ export const useEventStore = create<EventState>((set, get) => ({
         events,
         filteredEvents: events,
       });
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+    } catch (e: any) {
+      const errorMessage = e?.message || 'Unknown error';
       setError(`Không thể tải sự kiện: ${errorMessage}`);
     } finally {
       setLoading(false);
@@ -85,8 +85,8 @@ export const useEventStore = create<EventState>((set, get) => ({
       } else {
         throw new Error('Không tìm thấy sự kiện');
       }
-    } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+    } catch (e: any) {
+        const errorMessage = e?.message || 'Unknown error';
         setError(`Không thể tải chi tiết sự kiện: ${errorMessage}`);
     } finally {
         setLoading(false);
@@ -107,8 +107,8 @@ export const useEventStore = create<EventState>((set, get) => ({
     try {
       const tickets = await api.getMyTickets(user.id);
       set({ myTickets: tickets });
-    } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+    } catch (e: any) {
+        const errorMessage = e?.message || 'Unknown error';
         console.error("Error fetching tickets:", errorMessage);
         setError(`Không thể tải vé của bạn: ${errorMessage}`);
     } finally {
@@ -180,8 +180,8 @@ export const useEventStore = create<EventState>((set, get) => ({
         const allEvents = await api.getEvents();
         const organizerEvents = allEvents.filter(e => e.organizer_id === user.id);
         set({ organizerEvents });
-    } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+    } catch (e: any) {
+        const errorMessage = e?.message || 'Unknown error';
         setError(`Không thể tải sự kiện của bạn: ${errorMessage}`);
     } finally {
         setLoading(false);
@@ -206,8 +206,8 @@ export const useEventStore = create<EventState>((set, get) => ({
             organizerEvents: [...state.organizerEvents, newEvent],
         }));
         return true;
-    } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+    } catch (e: any) {
+        const errorMessage = e?.message || 'Unknown error';
         setError(`Không thể tạo sự kiện: ${errorMessage}`);
         return false;
     } finally {
@@ -224,8 +224,8 @@ export const useEventStore = create<EventState>((set, get) => ({
             organizerEvents: state.organizerEvents.map(e => e.id === eventId ? updatedEvent : e),
         }));
         return true;
-    } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+    } catch (e: any) {
+        const errorMessage = e?.message || 'Unknown error';
         setError(`Không thể cập nhật sự kiện: ${errorMessage}`);
         return false;
     } finally {
@@ -243,8 +243,8 @@ export const useEventStore = create<EventState>((set, get) => ({
     setLoading(true);
     try {
         await api.deleteEvent(eventId);
-    } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+    } catch (e: any) {
+        const errorMessage = e?.message || 'Unknown error';
         setError(`Không thể xóa sự kiện: ${errorMessage}`);
         // Revert on error
         set({ organizerEvents: originalEvents });
